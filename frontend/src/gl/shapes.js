@@ -1,17 +1,91 @@
-import { ShapeGeometry, Shape, TubeGeometry, MathUtils } from 'three';
+import { BufferGeometry, Float32BufferAttribute, TubeGeometry, MathUtils } from 'three';
 
-/** Leaf pointing along +x, base at the origin, length 1, gently curled. */
+/** Botanical leaf pointing along +x, base at the origin, length 1, realistic 3D curl and midrib. */
 export function leafGeometry() {
-  const s = new Shape();
-  s.moveTo(0, 0);
-  s.bezierCurveTo(0.16, 0.42, 0.62, 0.42, 1, 0);
-  s.bezierCurveTo(0.62, -0.42, 0.16, -0.42, 0, 0);
-  const g = new ShapeGeometry(s, 10);
-  const p = g.attributes.position;
-  for (let i = 0; i < p.count; i++) {
-    const x = p.getX(i), y = p.getY(i);
-    p.setZ(i, 0.22 * x * x + 0.12 * Math.abs(y)); // curl along the length and fold at the midrib
+  const segU = 16, segV = 8;
+  const positions = [];
+  const uvs = [];
+  const indices = [];
+
+  for (let i = 0; i <= segU; i++) {
+    const u = i / segU;
+    const wBase = Math.sin(Math.PI * Math.pow(u, 0.72));
+    const lobe = 1 + 0.05 * Math.sin(u * 14) * Math.sin(Math.PI * u);
+    const halfWidth = 0.30 * wBase * lobe;
+    const arch = -0.12 * Math.sin(Math.PI * Math.pow(u, 1.1));
+
+    for (let j = 0; j <= segV; j++) {
+      const v = (j / segV) * 2 - 1;
+      const x = u;
+      const y = v * halfWidth;
+      const midrib = 0.02 * (1 - Math.abs(v)) * Math.sin(Math.PI * u);
+      const cup = 0.12 * (v * v) * Math.sin(Math.PI * Math.pow(u, 0.6));
+      const edgeWave = 0.012 * Math.sin(u * 12 + v * 3) * Math.abs(v);
+      const z = cup + arch - midrib + edgeWave;
+
+      positions.push(x, y, z);
+      uvs.push(u, (v + 1) / 2);
+    }
   }
+
+  for (let i = 0; i < segU; i++) {
+    for (let j = 0; j < segV; j++) {
+      const a = i * (segV + 1) + j;
+      const b = (i + 1) * (segV + 1) + j;
+      const c = (i + 1) * (segV + 1) + (j + 1);
+      const d = i * (segV + 1) + (j + 1);
+      indices.push(a, b, d);
+      indices.push(b, c, d);
+    }
+  }
+
+  const g = new BufferGeometry();
+  g.setIndex(indices);
+  g.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  g.setAttribute('uv', new Float32BufferAttribute(uvs, 2));
+  g.computeVertexNormals();
+  return g;
+}
+
+/** 5-pointed star calyx that curves down over the tomato crown. */
+export function calyxGeometry(r = 1) {
+  const positions = [];
+  const indices = [];
+  const numSepals = 5;
+
+  positions.push(0, 0, 0.04 * r);
+
+  for (let i = 0; i < numSepals; i++) {
+    const a = (i / numSepals) * Math.PI * 2;
+    const aMid = a + Math.PI / numSepals;
+
+    const notchR = 0.22 * r;
+    const nx = Math.cos(a) * notchR;
+    const ny = Math.sin(a) * notchR;
+    const nz = 0.01 * r;
+
+    const midR = 0.52 * r;
+    const mx = Math.cos(aMid) * midR;
+    const my = Math.sin(aMid) * midR;
+    const mz = -0.07 * r;
+
+    const tipR = 0.85 * r;
+    const tx = Math.cos(aMid) * tipR;
+    const ty = Math.sin(aMid) * tipR;
+    const tz = -0.22 * r;
+
+    const baseIdx = positions.length / 3;
+    positions.push(nx, ny, nz);
+    positions.push(mx, my, mz);
+    positions.push(tx, ty, tz);
+
+    indices.push(0, baseIdx, baseIdx + 1);
+    indices.push(baseIdx + 1, baseIdx + 2, 0);
+  }
+
+  const g = new BufferGeometry();
+  g.setIndex(indices);
+  g.setAttribute('position', new Float32BufferAttribute(positions, 3));
   g.computeVertexNormals();
   return g;
 }
