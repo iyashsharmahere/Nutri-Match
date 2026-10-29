@@ -1,0 +1,11 @@
+{
+  "name": "nutrimatch",
+  "version": "2.3.2",
+  "private": true,
+  "description": "NutriMatch AI meal planning platform",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "dev": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && python -m uvicorn main:app --reload --port 8000"
+  }
+}

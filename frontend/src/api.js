@@ -1,5 +1,10 @@
-// Backend URL: set VITE_API_URL in frontend/.env to point at a deployed API.
-const API = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '');
+// Backend URL:
+// In development, default to 'http://127.0.0.1:8000'.
+// In production (e.g. hosted on Vercel), if VITE_API_URL is not set, default to same-origin ''
+// so API requests hit the serverless /api route on the same domain.
+const configuredUrl = import.meta.env.VITE_API_URL;
+const defaultUrl = import.meta.env.DEV ? 'http://127.0.0.1:8000' : '';
+const API = (configuredUrl !== undefined && configuredUrl !== '' ? configuredUrl : defaultUrl).replace(/\/+$/, '');
 
 // Free hosting tiers can take ~30-60s to wake up, so be patient before giving up.
 const TIMEOUT_MS = 45000;

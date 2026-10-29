@@ -69,7 +69,10 @@ async def request_context(request: Request, call_next):
     rid = uuid.uuid4().hex[:8]
     start = time.perf_counter()
 
-    if request.method == "POST" and request.url.path.startswith("/api/recommend"):
+    if request.method == "POST" and (
+        request.url.path.startswith("/api/recommend")
+        or request.url.path.startswith("/recommend")
+    ):
         allowed, retry = limiter.check(_client_ip(request))
         if not allowed:
             return JSONResponse(
@@ -107,12 +110,15 @@ app.add_middleware(
 
 
 @app.get("/")
+@app.get("/api")
+@app.get("/api/")
 def read_root():
     total, _ = get_all_foods(limit=1)
     return {"service": "NutriMatch API", "status": "online", "dataset_records": total}
 
 
 @app.get("/health")
+@app.get("/api/health")
 def health():
     """Liveness/readiness probe for hosting platforms."""
     total, _ = get_all_foods(limit=1)
@@ -120,6 +126,7 @@ def health():
 
 
 @app.post("/api/recommend", response_model=RecommendationResponse)
+@app.post("/recommend", response_model=RecommendationResponse)
 def generate_recommendations(user: UserInput):
     try:
         target_macros, full_day_plan = get_recommendations(user)
@@ -129,6 +136,7 @@ def generate_recommendations(user: UserInput):
 
 
 @app.post("/api/recommend/week", response_model=WeekResponse)
+@app.post("/recommend/week", response_model=WeekResponse)
 def generate_week(user: UserInput):
     try:
         target_macros, days = get_week_plan(user)
@@ -144,6 +152,7 @@ def generate_week(user: UserInput):
 
 
 @app.post("/api/recommend/swap", response_model=List[FoodRecommendation])
+@app.post("/recommend/swap", response_model=List[FoodRecommendation])
 def swap_meal(request: SwapRequest):
     return get_swap_options(
         slot=request.meal_slot,
@@ -156,6 +165,7 @@ def swap_meal(request: SwapRequest):
 
 
 @app.get("/api/foods")
+@app.get("/foods")
 def query_foods(
     search: str = Query("", max_length=100),
     category: str = Query("All", max_length=50),
@@ -170,6 +180,7 @@ def query_foods(
 
 
 @app.get("/api/categories")
+@app.get("/categories")
 def get_categories():
     return {
         "categories": ["All", "Breakfast", "Lunch, Dinner", "Curry", "Snack", "Appetizer", "Dessert", "Salad", "Soup", "Dal", "Rice", "Bread", "Beverages"],

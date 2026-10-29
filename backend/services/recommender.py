@@ -18,7 +18,21 @@ from schemas.recommendation import (
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-DATA_PATH = os.path.join(BASE_DIR, "data", "foods_modified_reviewed.xlsx")
+
+def _resolve_data_file(rel_path):
+    candidates = [
+        os.path.join(BASE_DIR, rel_path),
+        os.path.abspath(os.path.join(os.getcwd(), "backend", rel_path)),
+        os.path.abspath(os.path.join(os.getcwd(), rel_path)),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", rel_path)),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    return os.path.join(BASE_DIR, rel_path)
+
+
+DATA_PATH = _resolve_data_file(os.path.join("data", "foods_modified_reviewed.xlsx"))
 _scaler = None
 _df = None
 _names = None    # food names, row-aligned with _df
@@ -75,9 +89,11 @@ ALLERGEN_OPTIONS = [
 
 
 def load_resources():
-    global _scaler, _df, _scaled, _masks
+    global _scaler, _df, _scaled, _masks, DATA_PATH
 
     if _df is None:
+        if not os.path.exists(DATA_PATH):
+            DATA_PATH = _resolve_data_file(os.path.join("data", "foods_modified_reviewed.xlsx"))
         if not os.path.exists(DATA_PATH):
             raise FileNotFoundError(
                 f"Dataset Excel missing at {DATA_PATH}"
