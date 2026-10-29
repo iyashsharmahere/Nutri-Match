@@ -1,15 +1,13 @@
 import {
   Scene, PerspectiveCamera, Group, Mesh, MeshStandardMaterial, CylinderGeometry, TorusGeometry,
-  Shape, ExtrudeGeometry, SphereGeometry, ConeGeometry, TubeGeometry, CatmullRomCurve3, Vector3,
+  Shape, ExtrudeGeometry, SphereGeometry, ConeGeometry, CatmullRomCurve3, Vector3, Vector2, LatheGeometry,
   AmbientLight, DirectionalLight, HemisphereLight, CircleGeometry, MeshBasicMaterial, DoubleSide,
 } from 'three';
 import { C } from '../palette.js';
 import { DEFAULT_SHARES, sharesFrom } from '../helpers.js';
-import { leafGeometry, smooth, clamp } from '../shapes.js';
+import { leafGeometry, calyxGeometry, taperedTube, smooth, clamp } from '../shapes.js';
 
 export { DEFAULT_SHARES, sharesFrom };
-
-const mat = (color, extra = {}) => new MeshStandardMaterial({ color, roughness: 0.62, metalness: 0, flatShading: true, ...extra });
 
 function buildWedges(shares) {
   const group = new Group();
@@ -40,29 +38,124 @@ function produce() {
   const items = [];
   const add = (obj, o) => { items.push({ obj, ...o }); return obj; };
 
+  // 1. Vine-ripe tomato with glossy skin and curved 5-star calyx
   const tomato = new Group();
-  tomato.add(new Mesh(new SphereGeometry(0.34, 18, 14), mat(C.clay)));
-  const cap = new Mesh(new ConeGeometry(0.17, 0.12, 6), mat(C.moss)); cap.position.y = 0.3; tomato.add(cap);
+  const tomatoMat = new MeshStandardMaterial({ color: 0xd12828, roughness: 0.16, metalness: 0.02 });
+  const tomatoBody = new Mesh(new SphereGeometry(0.34, 28, 22), tomatoMat);
+  tomatoBody.scale.set(1.08, 0.90, 1.08);
+  tomato.add(tomatoBody);
+  const sepalMat = new MeshStandardMaterial({ color: 0x2e6d38, roughness: 0.48, side: DoubleSide });
+  const calyx = new Mesh(calyxGeometry(0.34), sepalMat);
+  calyx.position.y = 0.29;
+  calyx.scale.set(0.34, 0.34, 0.34);
+  tomato.add(calyx);
+  const tomatoStem = new Mesh(new CylinderGeometry(0.025, 0.035, 0.15, 8), sepalMat);
+  tomatoStem.position.set(0.02, 0.38, 0);
+  tomatoStem.rotation.z = 0.22;
+  tomato.add(tomatoStem);
 
+  // 2. Sunny citrus lemon with realistic contoured profile and stem button
   const lemon = new Group();
-  const body = new Mesh(new SphereGeometry(0.3, 18, 14), mat(C.saffronLight)); body.scale.set(1.3, 0.92, 0.92); lemon.add(body);
-  const nub = new Mesh(new ConeGeometry(0.06, 0.1, 6), mat(C.saffronLight)); nub.rotation.z = -Math.PI / 2; nub.position.x = 0.4; lemon.add(nub);
+  const lemonPts = [
+    new Vector2(0.001, 0.42),
+    new Vector2(0.035, 0.40),
+    new Vector2(0.07, 0.36),
+    new Vector2(0.20, 0.22),
+    new Vector2(0.26, 0.0),
+    new Vector2(0.20, -0.22),
+    new Vector2(0.07, -0.36),
+    new Vector2(0.035, -0.40),
+    new Vector2(0.001, -0.42),
+  ];
+  const lemonGeo = new LatheGeometry(lemonPts, 24);
+  const lemonMat = new MeshStandardMaterial({ color: 0xf6cf22, roughness: 0.34, metalness: 0.02 });
+  const lemonBody = new Mesh(lemonGeo, lemonMat);
+  lemon.add(lemonBody);
+  const lemonButton = new Mesh(new CylinderGeometry(0.025, 0.035, 0.03, 8), new MeshStandardMaterial({ color: 0x5a7e36, roughness: 0.6 }));
+  lemonButton.position.y = -0.42;
+  lemon.add(lemonButton);
 
+  // 3. Crisp garden carrot with tapered organic root and feathery foliage top
   const carrot = new Group();
-  const root = new Mesh(new ConeGeometry(0.17, 0.85, 10), mat(C.saffron)); root.rotation.z = Math.PI; carrot.add(root);
-  [-0.07, 0, 0.07].forEach((x, i) => { const t = new Mesh(new ConeGeometry(0.035, 0.28, 5), mat(C.mossLight)); t.position.set(x, 0.55, 0); t.rotation.z = (i - 1) * 0.35; carrot.add(t); });
+  const carrotPts = [
+    new Vector2(0.001, 0.48),
+    new Vector2(0.14, 0.46),
+    new Vector2(0.165, 0.41),
+    new Vector2(0.16, 0.25),
+    new Vector2(0.14, 0.05),
+    new Vector2(0.11, -0.18),
+    new Vector2(0.07, -0.38),
+    new Vector2(0.025, -0.50),
+    new Vector2(0.001, -0.52),
+  ];
+  const carrotGeo = new LatheGeometry(carrotPts, 22);
+  const carrotMat = new MeshStandardMaterial({ color: 0xee5f10, roughness: 0.38, metalness: 0.02 });
+  const carrotRoot = new Mesh(carrotGeo, carrotMat);
+  carrot.add(carrotRoot);
 
+  const carrotGreenMat = new MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.45, side: DoubleSide });
+  [-0.08, -0.03, 0.03, 0.08].forEach((x, i) => {
+    const stalk = new Mesh(new CylinderGeometry(0.012, 0.022, 0.38, 6), carrotGreenMat);
+    stalk.position.set(x, 0.58, 0);
+    stalk.rotation.z = (i - 1.5) * 0.32;
+    const frond = new Mesh(leafGeometry(), carrotGreenMat);
+    frond.position.set(x * 1.5, 0.65, 0.02);
+    frond.scale.set(0.18, 0.18, 0.18);
+    frond.rotation.z = (i - 1.5) * 0.4;
+    carrot.add(stalk, frond);
+  });
+
+  // 4. Fresh Indian red chilli with curved tapered pod, calyx cap and curved stalk
   const chilli = new Group();
-  const curve = new CatmullRomCurve3([new Vector3(-0.4, 0.1, 0), new Vector3(-0.1, -0.08, 0), new Vector3(0.2, 0, 0), new Vector3(0.45, 0.22, 0)]);
-  chilli.add(new Mesh(new TubeGeometry(curve, 16, 0.075, 8), mat(C.clayDark)));
-  const stem = new Mesh(new CylinderGeometry(0.03, 0.04, 0.14, 6), mat(C.moss)); stem.position.set(-0.45, 0.14, 0); stem.rotation.z = 0.7; chilli.add(stem);
+  const chilliCurve = new CatmullRomCurve3([
+    new Vector3(-0.42, 0.14, 0),
+    new Vector3(-0.15, -0.06, 0.03),
+    new Vector3(0.12, -0.02, 0),
+    new Vector3(0.40, 0.18, -0.02),
+  ]);
+  const chilliGeo = taperedTube(chilliCurve, 24, 12, 0.082, 0.012);
+  const chilliMat = new MeshStandardMaterial({ color: 0xc41d1d, roughness: 0.18, metalness: 0.02 });
+  chilli.add(new Mesh(chilliGeo, chilliMat));
 
+  const chilliCap = new Mesh(new CylinderGeometry(0.085, 0.075, 0.08, 12), sepalMat);
+  chilliCap.position.set(-0.41, 0.14, 0);
+  chilliCap.rotation.z = -0.55;
+  chilli.add(chilliCap);
+
+  const chilliStem = new Mesh(new CylinderGeometry(0.022, 0.03, 0.16, 8), sepalMat);
+  chilliStem.position.set(-0.48, 0.21, 0);
+  chilliStem.rotation.z = 0.65;
+  chilli.add(chilliStem);
+
+  // 5. Authentic garlic bulb with clustered clove lobes and papery tapered neck
   const garlic = new Group();
-  const bulb = new Mesh(new SphereGeometry(0.3, 16, 12), mat(C.cream)); bulb.scale.y = 0.85; garlic.add(bulb);
-  const top = new Mesh(new ConeGeometry(0.1, 0.28, 8), mat(C.cream)); top.position.y = 0.32; garlic.add(top);
+  const garlicMat = new MeshStandardMaterial({ color: 0xfbf7ed, roughness: 0.52, metalness: 0.02 });
+  const cloveGeo = new SphereGeometry(0.13, 16, 14);
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const clove = new Mesh(cloveGeo, garlicMat);
+    clove.position.set(Math.cos(a) * 0.13, 0.02, Math.sin(a) * 0.13);
+    clove.scale.set(0.85, 1.35, 1.0);
+    clove.rotation.y = -a;
+    garlic.add(clove);
+  }
+  const garlicCore = new Mesh(new CylinderGeometry(0.04, 0.15, 0.35, 12), garlicMat);
+  garlicCore.position.y = 0.05;
+  garlic.add(garlicCore);
+  const garlicNeck = new Mesh(new ConeGeometry(0.07, 0.28, 10), new MeshStandardMaterial({ color: 0xebd9be, roughness: 0.75 }));
+  garlicNeck.position.y = 0.30;
+  garlic.add(garlicNeck);
 
-  const leaf = new Mesh(leafGeometry(), mat(C.mossLight, { side: DoubleSide })); leaf.scale.setScalar(0.95); leaf.position.x = -0.45;
-  const leafG = new Group(); leafG.add(leaf);
+  // 6. Fresh botanical herb leaf with realistic 3D midrib curl and petiole stalk
+  const leafMat = new MeshStandardMaterial({ color: 0x2e6f3b, roughness: 0.36, metalness: 0.03, side: DoubleSide });
+  const herbLeaf = new Mesh(leafGeometry(), leafMat);
+  herbLeaf.scale.setScalar(0.95);
+  herbLeaf.position.x = -0.38;
+  const leafPetiole = new Mesh(new CylinderGeometry(0.015, 0.022, 0.25, 6), new MeshStandardMaterial({ color: 0x3d7e48, roughness: 0.5 }));
+  leafPetiole.rotation.z = -Math.PI / 2;
+  leafPetiole.position.set(-0.48, 0, 0);
+  const leafG = new Group();
+  leafG.add(herbLeaf, leafPetiole);
 
   const list = [
     [tomato, 3.15, 0.2, 1.55, 0.13], [lemon, 3.35, 1.25, 0.55, -0.1], [carrot, 3.05, 2.2, 1.35, 0.12],
@@ -78,9 +171,17 @@ export function create(ctx) {
   camera.position.set(0, 6.4, 10.6);
   camera.lookAt(0, 0.1, 0);
 
-  scene.add(new HemisphereLight(0xfffaf0, 0xcfc6b2, 1.05));
-  scene.add(new AmbientLight(0xffffff, 0.35));
-  const sun = new DirectionalLight(0xffffff, 2.1); sun.position.set(-4, 7, 5); scene.add(sun);
+  // Natural three-point studio lighting with subtle produce rim illumination
+  scene.add(new HemisphereLight(0xf4f8f0, 0xd8cbba, 1.15));
+  scene.add(new AmbientLight(0xffffff, 0.30));
+
+  const sun = new DirectionalLight(0xfff8ee, 1.9);
+  sun.position.set(-4, 7, 5);
+  scene.add(sun);
+
+  const rimLight = new DirectionalLight(0xdcf0f8, 1.25);
+  rimLight.position.set(4, 5, -5);
+  scene.add(rimLight);
 
   const root = new Group();
   scene.add(root);
