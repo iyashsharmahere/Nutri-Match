@@ -1,0 +1,18 @@
+import { parseIngredients, buildGroceryList, formatQty, categoryOf } from './grocery.js';
+import assert from 'node:assert/strict';
+const a = parseIngredients('RICE-125 gms; Gram dal-62 gms; Ginger-5 gms1; Egg-2 number');
+assert.deepEqual(a[0], { name: 'rice', qty: 125, unit: 'g' });
+assert.equal(a[2].qty, 5); assert.equal(a[3].unit, 'pc');
+assert.deepEqual(parseIngredients('Sugar, Milk, Ghee').map(x=>x.name), ['sugar','milk','ghee']);
+assert.deepEqual(parseIngredients('N/A'), []);
+const item = (n, ing) => ({ food_name: n, ingredients: ing });
+const plan = { breakfast: { portion: 2, items: [item('A', 'Atta-100 gms; Milk-250 ml')] }, lunch: { portion: 0.5, items: [item('B', 'Atta-100 gms; Onion')] } };
+const l = buildGroceryList([plan, plan]);
+const flat = l.groups.flatMap(g => g.items);
+const atta = flat.find(r => r.name === 'atta');
+assert.equal(atta.qty, 100*2*2 + 100*0.5*2); assert.equal(formatQty(atta), '500 g');
+assert.equal(formatQty({qty:1500,unit:'g'}), '1.5 kg');
+assert.equal(formatQty(flat.find(r=>r.name==='onion')), 'as needed');
+assert.equal(categoryOf('mustard oil'), 'Oils, ghee & fats'); assert.equal(categoryOf('garlic powder'), 'Spices & seasoning');
+assert.equal(categoryOf('chicken'), 'Meat & fish'); assert.equal(categoryOf('paneer'), 'Dairy & eggs');
+console.log('grocery tests OK', l.dishCount, l.groups.map(g=>g.category));

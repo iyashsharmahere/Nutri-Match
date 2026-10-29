@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html { background: #F6F2E9; color-scheme: light; }
+body {
+  margin: 0;
+  font-family: 'Figtree', system-ui, sans-serif;
+  color: #1F2B24;
+  background: #F6F2E9;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; letter-spacing: -0.01em; }
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type='number'] { -moz-appearance: textfield; }
+:focus-visible { outline: 2px solid #25513B; outline-offset: 2px; border-radius: 6px; }
+
+@layer components {
+  .btn { @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg px-5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply btn bg-moss text-white hover:bg-moss-dark; }
+  .btn-ghost { @apply btn border border-line bg-card text-ink hover:border-moss; }
+  .field { @apply min-h-[44px] w-full rounded-lg border border-line bg-white px-3 text-base text-ink placeholder:text-soft/70 focus:border-moss focus:outline-none focus:ring-2 focus:ring-moss/30; }
+  .chip { @apply inline-flex min-h-[44px] items-center rounded-lg border border-line bg-card px-4 text-sm font-medium text-ink transition-colors hover:border-moss; }
+  .chip[aria-checked='true'], .chip[aria-pressed='true'] { @apply border-moss bg-moss text-white; }
+  .label { @apply mb-1.5 block text-sm font-semibold text-ink; }
+  .hint { @apply mt-1 text-sm text-soft; }
+  .panel { @apply rounded-xl border border-line bg-card; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media print {
+  header, nav, .no-print { display: none !important; }
+  body { background: white; }
+}

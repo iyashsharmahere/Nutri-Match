@@ -1,0 +1,10 @@
+# Versions this project was tested with. Install with: pip install -r requirements.txt -c constraints.txt
+fastapi==0.148.0
+uvicorn==0.54.0
+pandas==3.0.2
+numpy==2.4.4
+scikit-learn==1.8.0
+pydantic==2.14.1
+openpyxl==3.1.5
+pytest==9.1.1
+httpx==0.28.1
