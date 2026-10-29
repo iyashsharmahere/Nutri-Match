@@ -581,5 +581,9 @@ def get_all_foods(
 
     total = len(df)
     page_df = df.iloc[offset:offset + limit]
+    clean_records = [
+        {k: (None if pd.isna(v) else v) for k, v in record.items()}
+        for record in page_df.to_dict(orient="records")
+    ]
 
-    return total, page_df.to_dict(orient="records")
+    return total, clean_records

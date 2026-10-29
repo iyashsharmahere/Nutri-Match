@@ -44,9 +44,10 @@ export default function Home({ go, hasPlan, inputs, macros }) {
   const est = hasPlan && inputs ? estimate(inputs) : null;
   return (
     <div className="relative">
-      <GrowingPlant />
-      {/* left padding leaves room for the plant in the margin */}
-      <div className="relative z-10 mx-auto max-w-6xl pb-24 pl-14 pr-5 pt-10 md:pb-16 md:pl-24 md:pt-16 xl:pl-32 2xl:pl-5">
+      <GrowingPlant side="left" />
+      <GrowingPlant side="right" />
+      {/* padding leaves room for the plants in the left and right margins */}
+      <div className="relative z-10 mx-auto max-w-6xl pb-24 pl-14 pr-14 pt-10 md:pb-16 md:pl-24 md:pr-24 md:pt-16 xl:pl-32 xl:pr-32 2xl:px-5">
         <section className="grid items-center gap-8 md:grid-cols-[1.05fr_0.95fr] md:gap-10">
           <div>
             <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-moss">Meal planning for Indian kitchens</p>
